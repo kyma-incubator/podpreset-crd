@@ -101,4 +101,3 @@ ci-master: build-controller test-controller build-image-controller push-image-co
 
 .PHONY: ci-release
 ci-release: build-controller test-controller build-image-controller push-image-controller build-webhook build-image-webhook push-image-webhook
-
