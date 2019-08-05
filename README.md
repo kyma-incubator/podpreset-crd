@@ -31,7 +31,8 @@ In order to deploy the PodPreset resource into your cluster, do the following:
 1. Build the webhook container image.
 
    ```shell
-   make docker-build-webhook
+   make build-webhook
+   make build-image-webhook
    ```
 
 1. Install the webhook.
@@ -41,6 +42,12 @@ In order to deploy the PodPreset resource into your cluster, do the following:
    ```
 
 1. Apply desired pod presets as needed, example given below.
+
+## Build process
+
+Docker images for controller and webhook server are automatically created on every commit and PR:
+- eu.gcr.io/kyma-project/incubator/pr/podpreset-controller:PR-X
+- eu.gcr.io/kyma-project/incubator/pr/podpreset-webhook:PR-X
 
 ## Example usage
 
@@ -70,8 +77,3 @@ This repository is only one piece required for full integration with Service
 Catalog. Also review the [podpresetbinding-crd](https://github.com/jpeeler/podpresetbinding-crd)
 repository for functionality that auto-generates pod presets upon service
 bindings being ready.
-
-### WARNING
-
-Until the podpresetbinding-crd work is complete, this repo will likely undergo force pushes
-to add additional necessary changes.
