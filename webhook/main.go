@@ -48,7 +48,7 @@ const (
 type Config struct {
 	CertFile string
 	KeyFile  string
-	ServerPort string
+	ServerPort int
 }
 
 func (c *Config) addFlags() {
@@ -57,8 +57,8 @@ func (c *Config) addFlags() {
 		"after server cert).")
 	flag.StringVar(&c.KeyFile, "tls-private-key-file", c.KeyFile, ""+
 		"File containing the default x509 private key matching --tls-cert-file.")
-	flag.StringVar(&c.ServerPort, "tls-server-port", c.ServerPort, ""+
-		"TCP address to listen on, ':http' if empty")
+	flag.IntVar(&c.ServerPort, "tls-server-port", 8443, ""+
+		"TCP port to listen on, 8443 if empty")
 }
 
 func toAdmissionResponse(err error) *v1beta1.AdmissionResponse {
@@ -493,7 +493,7 @@ func main() {
 
 	http.HandleFunc("/mutating-pods", serveMutatePods)
 	server := &http.Server{
-		Addr:      config.ServerPort,
+		Addr:      fmt.Sprintf(":%d", config.ServerPort),
 		TLSConfig: configTLS(config),
 	}
 	glog.Infof("About to start serving webhooks: %#v", server)
