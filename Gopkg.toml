@@ -1,6 +1,5 @@
 required = [
     "github.com/emicklei/go-restful",
-    "github.com/golang/lint",
     "github.com/onsi/ginkgo", # for test framework
     "github.com/onsi/gomega", # for test matchers
     "k8s.io/client-go/plugin/pkg/client/auth/gcp", # for development against gcp
@@ -163,68 +162,12 @@ name="golang.org/x/sys"
 revision="7db1c3b1a98089d0071c84f646ff5c96aad43682"
 
 [[override]]
-name="golang.org/x/text"
-version="v0.3.0"
-
-[[override]]
-name="golang.org/x/time"
-revision="fbb02b2291d28baffd63558aa44b4b56f178d650"
-
-[[override]]
-name="golang.org/x/tools"
-revision="32950ab3be12acf6d472893021373669979907ab"
-
-[[override]]
-name="google.golang.org/appengine"
-version="v1.1.0"
-
-[[override]]
-name="gopkg.in/inf.v0"
-version="v0.9.1"
-
-[[override]]
-name="gopkg.in/tomb.v1"
-revision = "dd632973f1e7218eb1089048e0798ec9ae7dceb8"
-
-[[override]]
-name="gopkg.in/yaml.v2"
-version="v2.2.1"
-
-[[override]]
-name="k8s.io/api"
-version="kubernetes-1.10.0"
-
-[[override]]
-name="k8s.io/apiextensions-apiserver"
-version="kubernetes-1.10.1"
-
-[[override]]
-name="k8s.io/apimachinery"
-version="kubernetes-1.10.0"
-
-[[override]]
-name="k8s.io/client-go"
-version="kubernetes-1.10.1"
-
-[[override]]
-name="k8s.io/code-generator"
-revision="7b3961072db196a1068e97f76c74ca6bc6b65350"
-
-[[override]]
-name="k8s.io/gengo"
-revision="906d99f89cd644eecf75ab547b29bf9f876f0b59"
-
-[[override]]
-name="k8s.io/kube-openapi"
-revision="f08db293d3ef80052d6513ece19792642a289fea"
-
-[[override]]
 name="sigs.k8s.io/controller-runtime"
-branch="master"
+version="v0.1.10"
 
 [[override]]
 name="sigs.k8s.io/controller-tools"
-branch="master"
+version="v0.1.10"
 
 [[override]]
 name="sigs.k8s.io/testing_frameworks"

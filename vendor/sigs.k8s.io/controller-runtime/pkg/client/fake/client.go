@@ -19,9 +19,12 @@ package fake
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -29,6 +32,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
+	"sigs.k8s.io/controller-runtime/pkg/internal/objectutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -38,6 +42,7 @@ var (
 
 type fakeClient struct {
 	tracker testing.ObjectTracker
+	scheme  *runtime.Scheme
 }
 
 var _ client.Client = &fakeClient{}
@@ -45,22 +50,30 @@ var _ client.Client = &fakeClient{}
 // NewFakeClient creates a new fake client for testing.
 // You can choose to initialize it with a slice of runtime.Object.
 func NewFakeClient(initObjs ...runtime.Object) client.Client {
-	tracker := testing.NewObjectTracker(scheme.Scheme, scheme.Codecs.UniversalDecoder())
+	return NewFakeClientWithScheme(scheme.Scheme, initObjs...)
+}
+
+// NewFakeClientWithScheme creates a new fake client with the given scheme
+// for testing.
+// You can choose to initialize it with a slice of runtime.Object.
+func NewFakeClientWithScheme(clientScheme *runtime.Scheme, initObjs ...runtime.Object) client.Client {
+	tracker := testing.NewObjectTracker(clientScheme, scheme.Codecs.UniversalDecoder())
 	for _, obj := range initObjs {
 		err := tracker.Add(obj)
 		if err != nil {
-			log.Error(err, "failed to add object", "object", obj)
+			log.Error(err, "failed to add object to fake client", "object", obj)
 			os.Exit(1)
 			return nil
 		}
 	}
 	return &fakeClient{
 		tracker: tracker,
+		scheme:  clientScheme,
 	}
 }
 
 func (c *fakeClient) Get(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
-	gvr, err := getGVRFromObject(obj)
+	gvr, err := getGVRFromObject(obj, c.scheme)
 	if err != nil {
 		return err
 	}
@@ -78,7 +91,16 @@ func (c *fakeClient) Get(ctx context.Context, key client.ObjectKey, obj runtime.
 }
 
 func (c *fakeClient) List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error {
-	gvk := opts.Raw.TypeMeta.GroupVersionKind()
+	gvk, err := getGVKFromList(list, c.scheme)
+	if err != nil {
+		// The old fake client required GVK info in Raw.TypeMeta, so check there
+		// before giving up
+		if opts.Raw == nil || opts.Raw.TypeMeta.APIVersion == "" || opts.Raw.TypeMeta.Kind == "" {
+			return err
+		}
+		gvk = opts.Raw.TypeMeta.GroupVersionKind()
+	}
+
 	gvr, _ := meta.UnsafeGuessKindToResource(gvk)
 	o, err := c.tracker.List(gvr, gvk, opts.Namespace)
 	if err != nil {
@@ -90,11 +112,34 @@ func (c *fakeClient) List(ctx context.Context, opts *client.ListOptions, list ru
 	}
 	decoder := scheme.Codecs.UniversalDecoder()
 	_, _, err = decoder.Decode(j, nil, list)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if opts.LabelSelector != nil {
+		return filterListItems(list, opts.LabelSelector)
+	}
+	return nil
+}
+
+func filterListItems(list runtime.Object, labSel labels.Selector) error {
+	objs, err := meta.ExtractList(list)
+	if err != nil {
+		return err
+	}
+	filteredObjs, err := objectutil.FilterWithLabels(objs, labSel)
+	if err != nil {
+		return err
+	}
+	err = meta.SetList(list, filteredObjs)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *fakeClient) Create(ctx context.Context, obj runtime.Object) error {
-	gvr, err := getGVRFromObject(obj)
+	gvr, err := getGVRFromObject(obj, c.scheme)
 	if err != nil {
 		return err
 	}
@@ -105,8 +150,8 @@ func (c *fakeClient) Create(ctx context.Context, obj runtime.Object) error {
 	return c.tracker.Create(gvr, obj, accessor.GetNamespace())
 }
 
-func (c *fakeClient) Delete(ctx context.Context, obj runtime.Object) error {
-	gvr, err := getGVRFromObject(obj)
+func (c *fakeClient) Delete(ctx context.Context, obj runtime.Object, opts ...client.DeleteOptionFunc) error {
+	gvr, err := getGVRFromObject(obj, c.scheme)
 	if err != nil {
 		return err
 	}
@@ -114,11 +159,12 @@ func (c *fakeClient) Delete(ctx context.Context, obj runtime.Object) error {
 	if err != nil {
 		return err
 	}
+	//TODO: implement propagation
 	return c.tracker.Delete(gvr, accessor.GetNamespace(), accessor.GetName())
 }
 
 func (c *fakeClient) Update(ctx context.Context, obj runtime.Object) error {
-	gvr, err := getGVRFromObject(obj)
+	gvr, err := getGVRFromObject(obj, c.scheme)
 	if err != nil {
 		return err
 	}
@@ -133,13 +179,31 @@ func (c *fakeClient) Status() client.StatusWriter {
 	return &fakeStatusWriter{client: c}
 }
 
-func getGVRFromObject(obj runtime.Object) (schema.GroupVersionResource, error) {
-	gvk, err := apiutil.GVKForObject(obj, scheme.Scheme)
+func getGVRFromObject(obj runtime.Object, scheme *runtime.Scheme) (schema.GroupVersionResource, error) {
+	gvk, err := apiutil.GVKForObject(obj, scheme)
 	if err != nil {
 		return schema.GroupVersionResource{}, err
 	}
 	gvr, _ := meta.UnsafeGuessKindToResource(gvk)
 	return gvr, nil
+}
+
+func getGVKFromList(list runtime.Object, scheme *runtime.Scheme) (schema.GroupVersionKind, error) {
+	gvk, err := apiutil.GVKForObject(list, scheme)
+	if err != nil {
+		return schema.GroupVersionKind{}, err
+	}
+
+	if gvk.Kind == "List" {
+		return schema.GroupVersionKind{}, fmt.Errorf("cannot derive GVK for generic List type %T (kind %q)", list, gvk)
+	}
+
+	if !strings.HasSuffix(gvk.Kind, "List") {
+		return schema.GroupVersionKind{}, fmt.Errorf("non-list type %T (kind %q) passed as output", list, gvk)
+	}
+	// we need the non-list GVK, so chop off the "List" from the end of the kind
+	gvk.Kind = gvk.Kind[:len(gvk.Kind)-4]
+	return gvk, nil
 }
 
 type fakeStatusWriter struct {

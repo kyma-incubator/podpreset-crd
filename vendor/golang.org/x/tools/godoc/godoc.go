@@ -33,7 +33,9 @@ import (
 )
 
 // Fake relative package path for built-ins. Documentation for all globals
-// (not just exported ones) will be shown for packages in this directory.
+// (not just exported ones) will be shown for packages in this directory,
+// and there will be no association of consts, vars, and factory functions
+// with types (see issue 6645).
 const builtinPkgPath = "builtin"
 
 // FuncMap defines template functions used in godoc templates.
@@ -77,7 +79,6 @@ func (p *Presentation) initFuncMap() {
 		"node":         p.nodeFunc,
 		"node_html":    p.node_htmlFunc,
 		"comment_html": comment_htmlFunc,
-		"comment_text": comment_textFunc,
 		"sanitize":     sanitizeFunc,
 
 		// support for URL attributes
@@ -91,7 +92,6 @@ func (p *Presentation) initFuncMap() {
 
 		// formatting of Examples
 		"example_html":   p.example_htmlFunc,
-		"example_text":   p.example_textFunc,
 		"example_name":   p.example_nameFunc,
 		"example_suffix": p.example_suffixFunc,
 
@@ -111,6 +111,9 @@ func (p *Presentation) initFuncMap() {
 
 		// check whether to display third party section or not
 		"hasThirdParty": hasThirdParty,
+
+		// get the no. of columns to split the toc in search page
+		"tocColCount": tocColCount,
 	}
 	if p.URLForSrc != nil {
 		p.funcMap["srcLink"] = p.URLForSrc
@@ -285,7 +288,7 @@ func foreachLine(in []byte, fn func(line []byte)) {
 var commentPrefix = []byte(`<span class="comment">// `)
 
 // linkedField determines whether the given line starts with an
-// identifer in the provided ids map (mapping from identifier to the
+// identifier in the provided ids map (mapping from identifier to the
 // same identifier). The line can start with either an identifier or
 // an identifier in a comment. If one matches, it returns the
 // identifier that matched. Otherwise it returns the empty string.
@@ -349,35 +352,6 @@ func comment_htmlFunc(comment string) string {
 	// TODO(gri) Provide list of words (e.g. function parameters)
 	//           to be emphasized by ToHTML.
 	doc.ToHTML(&buf, comment, nil) // does html-escaping
-	return buf.String()
-}
-
-// punchCardWidth is the number of columns of fixed-width
-// characters to assume when wrapping text.  Very few people
-// use terminals or cards smaller than 80 characters, so 80 it is.
-// We do not try to sniff the environment or the tty to adapt to
-// the situation; instead, by using a constant we make sure that
-// godoc always produces the same output regardless of context,
-// a consistency that is lost otherwise.  For example, if we sniffed
-// the environment or tty, then http://golang.org/pkg/math/?m=text
-// would depend on the width of the terminal where godoc started,
-// which is clearly bogus.  More generally, the Unix tools that behave
-// differently when writing to a tty than when writing to a file have
-// a history of causing confusion (compare `ls` and `ls | cat`), and we
-// want to avoid that mistake here.
-const punchCardWidth = 80
-
-func containsOnlySpace(buf []byte) bool {
-	isNotSpace := func(r rune) bool { return !unicode.IsSpace(r) }
-	return bytes.IndexFunc(buf, isNotSpace) == -1
-}
-
-func comment_textFunc(comment, indent, preIndent string) string {
-	var buf bytes.Buffer
-	doc.ToText(&buf, comment, indent, preIndent, punchCardWidth-2*len(indent))
-	if containsOnlySpace(buf.Bytes()) {
-		return ""
-	}
 	return buf.String()
 }
 
@@ -589,50 +563,6 @@ func docLinkFunc(s string, ident string) string {
 	return pathpkg.Clean("/pkg/"+s) + "/#" + ident
 }
 
-func (p *Presentation) example_textFunc(info *PageInfo, funcName, indent string) string {
-	if !p.ShowExamples {
-		return ""
-	}
-
-	var buf bytes.Buffer
-	first := true
-	for _, eg := range info.Examples {
-		name := stripExampleSuffix(eg.Name)
-		if name != funcName {
-			continue
-		}
-
-		if !first {
-			buf.WriteString("\n")
-		}
-		first = false
-
-		// print code
-		cnode := &printer.CommentedNode{Node: eg.Code, Comments: eg.Comments}
-		config := &printer.Config{Mode: printer.UseSpaces, Tabwidth: p.TabWidth}
-		var buf1 bytes.Buffer
-		config.Fprint(&buf1, info.FSet, cnode)
-		code := buf1.String()
-
-		// Additional formatting if this is a function body. Unfortunately, we
-		// can't print statements individually because we would lose comments
-		// on later statements.
-		if n := len(code); n >= 2 && code[0] == '{' && code[n-1] == '}' {
-			// remove surrounding braces
-			code = code[1 : n-1]
-			// unindent
-			code = replaceLeadingIndentation(code, strings.Repeat(" ", p.TabWidth), indent)
-		}
-		code = strings.Trim(code, "\n")
-
-		buf.WriteString(indent)
-		buf.WriteString("Example:\n")
-		buf.WriteString(code)
-		buf.WriteString("\n\n")
-	}
-	return buf.String()
-}
-
 func (p *Presentation) example_htmlFunc(info *PageInfo, funcName string) string {
 	var buf bytes.Buffer
 	for _, eg := range info.Examples {
@@ -666,6 +596,7 @@ func (p *Presentation) example_htmlFunc(info *PageInfo, funcName string) string 
 		play := ""
 		if eg.Play != nil && p.ShowPlayground {
 			var buf bytes.Buffer
+			eg.Play.Comments = filterOutBuildAnnotations(eg.Play.Comments)
 			if err := format.Node(&buf, info.FSet, eg.Play); err != nil {
 				log.Print(err)
 			} else {
@@ -692,6 +623,23 @@ func (p *Presentation) example_htmlFunc(info *PageInfo, funcName string) string 
 		}
 	}
 	return buf.String()
+}
+
+func filterOutBuildAnnotations(cg []*ast.CommentGroup) []*ast.CommentGroup {
+	if len(cg) == 0 {
+		return cg
+	}
+
+	for i := range cg {
+		if !strings.HasPrefix(cg[i].Text(), "+build ") {
+			// Found the first non-build tag, return from here until the end
+			// of the slice.
+			return cg[i:]
+		}
+	}
+
+	// There weren't any non-build tags, return an empty slice.
+	return []*ast.CommentGroup{}
 }
 
 // example_nameFunc takes an example function name and returns its display
@@ -933,7 +881,7 @@ func (p *Presentation) writeNode(w io.Writer, pageInfo *PageInfo, fset *token.Fi
 		log.Print(err)
 	}
 
-	// Add comments to struct fields saying which Go version introducd them.
+	// Add comments to struct fields saying which Go version introduced them.
 	if structName != "" {
 		fieldSince := apiInfo.fieldSince[structName]
 		typeSince := apiInfo.typeSince[structName]

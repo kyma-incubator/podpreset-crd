@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
+	"github.com/spf13/afero"
 	extensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/gengo/args"
 	"k8s.io/gengo/types"
@@ -41,14 +42,25 @@ type Generator struct {
 	Namespace         string
 	SkipMapValidation bool
 
+	// OutFs is filesystem to be used for writing out the result
+	OutFs afero.Fs
+
 	// apisPkg is the absolute Go pkg name for current project's 'pkg/apis' pkg.
 	// This is needed to determine if a Type belongs to the project or it is a referred Type.
 	apisPkg string
+
+	// APIsPath and APIsPkg allow customized generation for Go types existing under directories other than pkg/apis
+	APIsPath string
+	APIsPkg  string
 }
 
 // ValidateAndInitFields validate and init generator fields.
 func (c *Generator) ValidateAndInitFields() error {
 	var err error
+
+	if c.OutFs == nil {
+		c.OutFs = afero.NewOsFs()
+	}
 
 	if len(c.RootPath) == 0 {
 		// Take current path as root path if not specified.
@@ -72,13 +84,7 @@ func (c *Generator) ValidateAndInitFields() error {
 		c.Domain = crdutil.GetDomainFromProject(c.RootPath)
 	}
 
-	// Validate apis directory exists under working path
-	apisPath := path.Join(c.RootPath, "pkg/apis")
-	if _, err := os.Stat(apisPath); err != nil {
-		return fmt.Errorf("error validating apis path %s: %v", apisPath, err)
-	}
-
-	c.apisPkg, err = crdutil.DirToGoPkg(apisPath)
+	err = c.setAPIsPkg()
 	if err != nil {
 		return err
 	}
@@ -104,7 +110,7 @@ func (c *Generator) Do() error {
 		return fmt.Errorf("failed switching working dir: %v", err)
 	}
 
-	if err := b.AddDirRecursive("./pkg/apis"); err != nil {
+	if err := b.AddDirRecursive("./" + c.APIsPath); err != nil {
 		return fmt.Errorf("failed making a parser: %v", err)
 	}
 	ctx, err := parse.NewContext(b)
@@ -116,21 +122,23 @@ func (c *Generator) Do() error {
 
 	// TODO: find an elegant way to fulfill the domain in APIs.
 	p := parse.NewAPIs(ctx, arguments, c.Domain, c.apisPkg)
-
 	crds := c.getCrds(p)
 
+	return c.writeCRDs(crds)
+}
+
+func (c *Generator) writeCRDs(crds map[string][]byte) error {
 	// Ensure output dir exists.
-	if err := os.MkdirAll(c.OutputDir, os.FileMode(0700)); err != nil {
+	if err := c.OutFs.MkdirAll(c.OutputDir, os.FileMode(0700)); err != nil {
 		return err
 	}
 
 	for file, crd := range crds {
 		outFile := path.Join(c.OutputDir, file)
-		if err := util.WriteFile(outFile, crd); err != nil {
+		if err := (&util.FileWriter{Fs: c.OutFs}).WriteFile(outFile, crd); err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -139,7 +147,7 @@ func getCRDFileName(resource *codegen.APIResource) string {
 	return strings.Join(elems, "_") + ".yaml"
 }
 
-func (c *Generator) getCrds(p *parse.APIs) map[string]string {
+func (c *Generator) getCrds(p *parse.APIs) map[string][]byte {
 	crds := map[string]extensionsv1beta1.CustomResourceDefinition{}
 	for _, g := range p.APIs.Groups {
 		for _, v := range g.Versions {
@@ -158,13 +166,13 @@ func (c *Generator) getCrds(p *parse.APIs) map[string]string {
 		}
 	}
 
-	result := map[string]string{}
+	result := map[string][]byte{}
 	for file, crd := range crds {
-		s, err := yaml.Marshal(crd)
+		b, err := yaml.Marshal(crd)
 		if err != nil {
 			log.Fatalf("Error: %v", err)
 		}
-		result[file] = string(s)
+		result[file] = b
 	}
 
 	return result
@@ -174,4 +182,26 @@ func (c *Generator) getCrds(p *parse.APIs) map[string]string {
 // current project.
 func (c *Generator) belongsToAPIsPkg(t *types.Type) bool {
 	return strings.HasPrefix(t.Name.Package, c.apisPkg)
+}
+
+func (c *Generator) setAPIsPkg() error {
+	var err error
+	if c.APIsPath == "" {
+		c.APIsPath = "pkg/apis"
+	}
+
+	c.apisPkg = c.APIsPkg
+	if c.apisPkg == "" {
+		// Validate apis directory exists under working path
+		apisPath := path.Join(c.RootPath, c.APIsPath)
+		if _, err := os.Stat(apisPath); err != nil {
+			return fmt.Errorf("error validating apis path %s: %v", apisPath, err)
+		}
+
+		c.apisPkg, err = crdutil.DirToGoPkg(apisPath)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
