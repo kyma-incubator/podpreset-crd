@@ -47,13 +47,14 @@ done
 ##
 # DEP STATUS
 ##
-echo "? dep status"
-depResult=$(dep status -v)
-if [ $? != 0 ]; then
-	echo -e "${RED}✗ dep status\n$depResult${NC}"
-	exit 1
-else echo -e "${GREEN}√ dep status${NC}"
-fi
+#echo "? dep status"
+#depResult=$(dep status -v)
+#if [ $? != 0 ]; then
+#	echo -e "${RED}✗ dep status\n$depResult${NC}"
+#	exit 1
+#else echo -e "${GREEN}√ dep status${NC}"
+#fi
+
 
 ##
 #  GO LINT
