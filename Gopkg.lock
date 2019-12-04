@@ -84,14 +84,6 @@
   revision = "66deaeb636dff1ac7d938ce666d090556056a4b0"
 
 [[projects]]
-  branch = "travis-1.9"
-  digest = "1:e84f095737b1b857021bafbfd3bcbac930fb1a969de7931946dc794dfc36ddb4"
-  name = "github.com/golang/lint"
-  packages = ["."]
-  pruneopts = "T"
-  revision = "883fe33ffc4344bad1ecd881f61afd5ec5d80e0a"
-
-[[projects]]
   digest = "1:832e17df5ff8bbe0e0693d2fb46c5e53f96c662ee804049ce3ab6557df74e3ab"
   name = "github.com/golang/protobuf"
   packages = [
@@ -330,6 +322,17 @@
   packages = ["ssh/terminal"]
   pruneopts = "T"
   revision = "4ec37c66abab2c7e02ae775328b2ff001c3f025a"
+
+[[projects]]
+  branch = "master"
+  digest = "1:a9fd2950a902dfe48dfd2dc4848443dbf7eb8bd0da3114b6abd450a85cf2a5b0"
+  name = "golang.org/x/lint"
+  packages = [
+    ".",
+    "golint",
+  ]
+  pruneopts = "T"
+  revision = "fdd1cda4f05fd1fd86124f0ef9ce31a0b72c8448"
 
 [[projects]]
   digest = "1:03b79d18832370034cb2b8ea8f122d38e17c76b927d30ccc891e22e1a4edd4d8"
@@ -744,10 +747,10 @@
   input-imports = [
     "github.com/emicklei/go-restful",
     "github.com/golang/glog",
-    "github.com/golang/lint",
     "github.com/mattbaird/jsonpatch",
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",
+    "golang.org/x/lint/golint",
     "golang.org/x/net/context",
     "k8s.io/api/admission/v1beta1",
     "k8s.io/api/admissionregistration/v1beta1",

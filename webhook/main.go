@@ -489,6 +489,10 @@ func serveMutatePods(w http.ResponseWriter, r *http.Request) {
 func main() {
 	var config Config
 	config.addFlags()
+	err := flag.Set("logtostderr", "true")
+	if err != nil {
+		glog.Errorf("Failed to configure glog: %v", err)
+	}
 	flag.Parse()
 
 	http.HandleFunc("/mutating-pods", serveMutatePods)
