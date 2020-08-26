@@ -44,13 +44,10 @@ const (
 	annotationPrefix = "podpreset.admission.kubernetes.io"
 )
 
-var crdClient client.Client
-
 // Config contains the server (the webhook) cert and key.
 type Config struct {
-	CertFile   string
-	KeyFile    string
-	ServerPort int
+	CertFile string
+	KeyFile  string
 }
 
 func (c *Config) addFlags() {
@@ -59,8 +56,6 @@ func (c *Config) addFlags() {
 		"after server cert).")
 	flag.StringVar(&c.KeyFile, "tls-private-key-file", c.KeyFile, ""+
 		"File containing the default x509 private key matching --tls-cert-file.")
-	flag.IntVar(&c.ServerPort, "tls-server-port", 8443, ""+
-		"TCP port to listen on, 8443 if empty")
 }
 
 func toAdmissionResponse(err error) *v1beta1.AdmissionResponse {
@@ -363,8 +358,9 @@ func mutatePods(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 		}
 	}
 
+	crdclient := getCrdClient()
 	list := &settingsapi.PodPresetList{}
-	err := crdClient.List(context.TODO(), &client.ListOptions{Namespace: pod.Namespace}, list)
+	err := crdclient.List(context.TODO(), &client.ListOptions{Namespace: pod.Namespace}, list)
 	if meta.IsNoMatchError(err) {
 		glog.Errorf("%v (has the CRD been loaded?)", err)
 		return toAdmissionResponse(err)
@@ -491,15 +487,12 @@ func main() {
 	var config Config
 	config.addFlags()
 	flag.Parse()
-	crdClient = getCrdClient()
 
 	http.HandleFunc("/mutating-pods", serveMutatePods)
 	server := &http.Server{
-		Addr:      fmt.Sprintf(":%d", config.ServerPort),
+		Addr:      ":443",
 		TLSConfig: configTLS(config),
 	}
 	glog.Infof("About to start serving webhooks: %#v", server)
-	if err := server.ListenAndServeTLS("", ""); err != nil {
-		glog.Errorf("Cannot start TLS server: %v", err)
-	}
+	server.ListenAndServeTLS("", "")
 }
