@@ -12,8 +12,7 @@ echo "USER: " + $USER
 echo "PATH: " + $PATH
 echo "GOPATH:" + $GOPATH
 echo -e "${NC}"
-echo "DEP CHECK"
-dep check
+
 ##
 # DEP ENSURE
 ##
