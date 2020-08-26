@@ -172,19 +172,6 @@
   version = "v1.2.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:32f00a18fc78d47c7f31b74a16e392dfd872b446dbae6ec944404bb501eeb75e"
-  name = "github.com/jpeeler/podpreset-crd"
-  packages = [
-    "pkg/apis",
-    "pkg/apis/settings/v1alpha1",
-    "pkg/controller",
-    "pkg/controller/podpreset",
-  ]
-  pruneopts = "T"
-  revision = "b3e10d0034e088a421e9eb289b94f3e3ee02523b"
-
-[[projects]]
   digest = "1:5d713dbcad44f3358fec51fd5573d4f733c02cac5a40dcb177787ad5ffe9272f"
   name = "github.com/json-iterator/go"
   packages = ["."]
@@ -760,10 +747,6 @@
   input-imports = [
     "github.com/emicklei/go-restful",
     "github.com/golang/glog",
-    "github.com/jpeeler/podpreset-crd/pkg/apis",
-    "github.com/jpeeler/podpreset-crd/pkg/apis/settings/v1alpha1",
-    "github.com/jpeeler/podpreset-crd/pkg/controller",
-    "github.com/jpeeler/podpreset-crd/pkg/controller/podpreset",
     "github.com/mattbaird/jsonpatch",
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",

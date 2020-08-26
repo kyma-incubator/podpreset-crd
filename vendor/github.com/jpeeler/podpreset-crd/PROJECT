@@ -1,3 +1,0 @@
-version: "1"
-domain: svcat.k8s.io
-repo: github.com/jpeeler/podpreset-crd
