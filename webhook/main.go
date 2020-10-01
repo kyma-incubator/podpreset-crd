@@ -44,8 +44,6 @@ const (
 	annotationPrefix = "podpreset.admission.kubernetes.io"
 )
 
-var crdClient client.Client
-
 // Config contains the server (the webhook) cert and key.
 type Config struct {
 	CertFile   string
@@ -365,6 +363,13 @@ func mutatePods(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 
 	list := &settingsapi.PodPresetList{}
 	err := crdClient.List(context.TODO(), &client.ListOptions{Namespace: pod.Namespace}, list)
+
+	// one retry
+	if meta.IsNoMatchError(err) {
+		crdClient = getCrdClient()
+		err = crdClient.List(context.TODO(), &client.ListOptions{Namespace: pod.Namespace}, list)
+	}
+
 	if meta.IsNoMatchError(err) {
 		glog.Errorf("%v (has the CRD been loaded?)", err)
 		return toAdmissionResponse(err)

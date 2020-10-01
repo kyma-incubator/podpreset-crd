@@ -19,24 +19,8 @@ package main
 import (
 	"crypto/tls"
 
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	"github.com/golang/glog"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
-
-func getCrdClient() client.Client {
-	config, err := config.GetConfig()
-	if err != nil {
-		glog.Fatal(err)
-	}
-	crdclient, err := client.New(config, client.Options{Scheme: scheme})
-	if err != nil {
-		glog.Fatal(err)
-	}
-
-	return crdclient
-}
 
 func configTLS(config Config) *tls.Config {
 	sCert, err := tls.LoadX509KeyPair(config.CertFile, config.KeyFile)
