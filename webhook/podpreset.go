@@ -37,7 +37,6 @@ func listPodPresetWithRetry(ns string) ([]settingsapi.PodPreset, error) {
 	// if the crd client was created before the CRD was applied - try to do a retry with a fresh client
 	if meta.IsNoMatchError(err) {
 		crdClient = getCrdClient()
-
 		l, err = listPodPresets(ns)
 	}
 	return l, err
