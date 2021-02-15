@@ -172,6 +172,19 @@
   version = "v1.2.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:32f00a18fc78d47c7f31b74a16e392dfd872b446dbae6ec944404bb501eeb75e"
+  name = "github.com/jpeeler/podpreset-crd"
+  packages = [
+    "pkg/apis",
+    "pkg/apis/settings/v1alpha1",
+    "pkg/controller",
+    "pkg/controller/podpreset",
+  ]
+  pruneopts = "T"
+  revision = "b3e10d0034e088a421e9eb289b94f3e3ee02523b"
+
+[[projects]]
   digest = "1:5d713dbcad44f3358fec51fd5573d4f733c02cac5a40dcb177787ad5ffe9272f"
   name = "github.com/json-iterator/go"
   packages = ["."]
@@ -376,7 +389,7 @@
   revision = "7db1c3b1a98089d0071c84f646ff5c96aad43682"
 
 [[projects]]
-  digest = "1:6164911cb5e94e8d8d5131d646613ff82c14f5a8ce869de2f6d80d9889df8c5a"
+  digest = "1:59ebcfde74aed19cec5c8c3b93122b1a42ea0a942a87e389ff84f447a51a935c"
   name = "golang.org/x/text"
   packages = [
     "collate",
@@ -393,6 +406,8 @@
     "encoding/unicode",
     "internal/colltab",
     "internal/gen",
+    "internal/language",
+    "internal/language/compact",
     "internal/tag",
     "internal/triegen",
     "internal/ucd",
@@ -407,8 +422,8 @@
     "unicode/rangetable",
   ]
   pruneopts = "T"
-  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
-  version = "v0.3.0"
+  revision = "75a595aef632b07c6eeaaa805adb6f0f66e4130e"
+  version = "v0.3.5"
 
 [[projects]]
   digest = "1:59a73243379bd5412feb268ec3d9ec0c55acb596ce15fdf937ec29ea6dab441f"
@@ -747,6 +762,10 @@
   input-imports = [
     "github.com/emicklei/go-restful",
     "github.com/golang/glog",
+    "github.com/jpeeler/podpreset-crd/pkg/apis",
+    "github.com/jpeeler/podpreset-crd/pkg/apis/settings/v1alpha1",
+    "github.com/jpeeler/podpreset-crd/pkg/controller",
+    "github.com/jpeeler/podpreset-crd/pkg/controller/podpreset",
     "github.com/mattbaird/jsonpatch",
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",
