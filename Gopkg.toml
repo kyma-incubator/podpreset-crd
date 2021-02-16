@@ -192,7 +192,7 @@ version="kubernetes-1.10.0"
 
 [[override]]
 name="k8s.io/apiextensions-apiserver"
-version="kubernetes-1.17.16"
+version="kubernetes-1.10.1"
 
 [[override]]
 name="k8s.io/apimachinery"
