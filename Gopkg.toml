@@ -71,10 +71,6 @@ name="github.com/google/gofuzz"
 revision="24818f796faf91cd76ec7bddd72458fbced7a6c1"
 
 [[override]]
-name="github.com/googleapis/gnostic"
-version="v0.1.0"
-
-[[override]]
 name="github.com/hashicorp/golang-lru"
 revision="0fb14efe8c47ae851c0034ed7a448854d3d34cf3"
 
@@ -152,7 +148,7 @@ revision="4ec37c66abab2c7e02ae775328b2ff001c3f025a"
 
 [[override]]
 name="golang.org/x/net"
-revision="640f4622ab692b87c2f3a94265e6f579fe38263d"
+revision="5f4716e94777e714bc2fb3e3a44599cb40817aac"
 
 [[override]]
 name="golang.org/x/oauth2"

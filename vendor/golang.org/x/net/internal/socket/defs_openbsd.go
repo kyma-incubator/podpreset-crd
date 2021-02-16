@@ -16,14 +16,6 @@ package socket
 */
 import "C"
 
-const (
-	sysAF_UNSPEC = C.AF_UNSPEC
-	sysAF_INET   = C.AF_INET
-	sysAF_INET6  = C.AF_INET6
-
-	sysSOCK_RAW = C.SOCK_RAW
-)
-
 type iovec C.struct_iovec
 
 type msghdr C.struct_msghdr
@@ -35,9 +27,8 @@ type sockaddrInet C.struct_sockaddr_in
 type sockaddrInet6 C.struct_sockaddr_in6
 
 const (
-	sizeofIovec   = C.sizeof_struct_iovec
-	sizeofMsghdr  = C.sizeof_struct_msghdr
-	sizeofCmsghdr = C.sizeof_struct_cmsghdr
+	sizeofIovec  = C.sizeof_struct_iovec
+	sizeofMsghdr = C.sizeof_struct_msghdr
 
 	sizeofSockaddrInet  = C.sizeof_struct_sockaddr_in
 	sizeofSockaddrInet6 = C.sizeof_struct_sockaddr_in6

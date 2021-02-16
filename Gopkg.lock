@@ -335,7 +335,7 @@
   revision = "fdd1cda4f05fd1fd86124f0ef9ce31a0b72c8448"
 
 [[projects]]
-  digest = "1:03b79d18832370034cb2b8ea8f122d38e17c76b927d30ccc891e22e1a4edd4d8"
+  digest = "1:87ce42c4dbf0c0029a6f8445e4f507c67b8e391b03fa7af4f9deccc615befbd2"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -347,10 +347,9 @@
     "http2",
     "http2/hpack",
     "idna",
-    "lex/httplex",
   ]
   pruneopts = "T"
-  revision = "640f4622ab692b87c2f3a94265e6f579fe38263d"
+  revision = "5f4716e94777e714bc2fb3e3a44599cb40817aac"
 
 [[projects]]
   digest = "1:1bf69745e9d172ae1e323b51bce6a460d6767d185755c370a4a7f4f5046340ae"
