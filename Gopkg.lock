@@ -733,14 +733,15 @@
   revision = "9e93ac1acf783f32460f055c71e810360d4cf84f"
 
 [[projects]]
-  digest = "1:a2a1732136cc0d306a6b1a6999f71fbe0d16e9c1d2234b34d67e0ebb952e5982"
+  digest = "1:7910bb36c540b1609ac234756c219e0ce3d3bdbd7dbe320ee1ed18a46670290f"
   name = "sigs.k8s.io/testing_frameworks"
   packages = [
     "integration",
+    "integration/addr",
     "integration/internal",
   ]
   pruneopts = "T"
-  revision = "f53464b8b84b4507805a0b033a8377b225163fea"
+  revision = "694245ac7b60bff90cc8b159fbd8ddb7efe3f218"
 
 [solve-meta]
   analyzer-name = "dep"
