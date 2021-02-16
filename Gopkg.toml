@@ -164,7 +164,7 @@ revision="7db1c3b1a98089d0071c84f646ff5c96aad43682"
 
 [[override]]
 name="golang.org/x/text"
-version="v0.3.0"
+version="v0.3.5"
 
 [[override]]
 name="golang.org/x/time"
