@@ -1,11 +1,10 @@
 # Build the manager binary
-FROM golang:1.14 as builder
+FROM golang:1.14.15 as builder
 
 # Copy in the go src
 WORKDIR /go/src/github.com/jpeeler/podpreset-crd
 COPY pkg/    pkg/
 COPY cmd/    cmd/
-COPY vendor/ vendor/
 
 RUN mkdir /user && \
     echo 'appuser:x:2000:2000:appuser:/:' > /user/passwd && \
