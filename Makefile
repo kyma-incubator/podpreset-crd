@@ -4,7 +4,7 @@ TAG=$(DOCKER_TAG)
 BINARY=$(APP_NAME)
 
 .PHONY: build-controller
-build-controller: generate manifests
+build-controller: manifests
 	./before-commit.sh ci
 
 # Run tests
