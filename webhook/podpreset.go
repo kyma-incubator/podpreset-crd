@@ -47,6 +47,6 @@ func listPodPresets(ns string) ([]settingsapi.PodPreset, error) {
 	defer muCrdClient.RUnlock()
 
 	list := &settingsapi.PodPresetList{}
-	err := crdClient.List(context.TODO(), &client.ListOptions{Namespace: ns}, list)
+	err := crdClient.List(context.TODO(), list, &client.ListOptions{Namespace: ns})
 	return list.Items, err
 }
