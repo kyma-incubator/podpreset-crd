@@ -13,7 +13,7 @@ RUN mkdir /user && \
 RUN mkdir -p tmp
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager github.com/jpeeler/podpreset-crd/cmd/manager
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager ./cmd/manager
 
 # Copy the controller-manager into a thin image
 FROM scratch
