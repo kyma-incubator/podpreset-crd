@@ -9,7 +9,7 @@ build-controller:
 
 # Run tests
 .PHONY: test-controller
-test-controller: generate manifests
+test-controller:
 	go test ./pkg/... ./cmd/...
 
 # Generate manifests e.g. CRD, RBAC etc.
