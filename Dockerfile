@@ -3,8 +3,9 @@ FROM golang:1.14.15 as builder
 
 # Copy in the go src
 WORKDIR /go/src/github.com/jpeeler/podpreset-crd
-COPY pkg/    pkg/
-COPY cmd/    cmd/
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
 
 RUN mkdir /user && \
     echo 'appuser:x:2000:2000:appuser:/:' > /user/passwd && \
@@ -12,7 +13,7 @@ RUN mkdir /user && \
 RUN mkdir -p tmp
 
 # Build
-RUN GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager github.com/jpeeler/podpreset-crd/cmd/manager
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager github.com/jpeeler/podpreset-crd/cmd/manager
 
 # Copy the controller-manager into a thin image
 FROM scratch
