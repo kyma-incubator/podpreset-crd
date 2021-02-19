@@ -31,7 +31,7 @@ binaries=("manager")
 buildEnv=""
 if [ "$1" == "$CI_FLAG" ]; then
 	# build binary statically for linux architecture
-	buildEnv="env CGO_ENABLED=0 GOOS=linux GOARCH=amd64"
+	buildEnv="env GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=amd64"
 fi
 
 for binary in "${binaries[@]}"; do
