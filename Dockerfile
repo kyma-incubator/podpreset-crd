@@ -5,6 +5,8 @@ FROM golang:1.14.15 as builder
 WORKDIR /go/src/github.com/jpeeler/podpreset-crd
 COPY go.mod .
 COPY go.sum .
+COPY pkg/    pkg/
+COPY cmd/    cmd/
 RUN go mod download
 
 RUN mkdir /user && \
