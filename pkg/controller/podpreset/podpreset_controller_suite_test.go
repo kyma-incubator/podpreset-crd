@@ -54,7 +54,7 @@ func TestMain(m *testing.M) {
 func SetupTestReconcile(inner reconcile.Reconciler) (reconcile.Reconciler, chan reconcile.Request) {
 	requests := make(chan reconcile.Request)
 	fn := reconcile.Func(func(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
-		result, err := inner.Reconcile(req)
+		result, err := inner.Reconcile(ctx, req)
 		requests <- req
 		return result, err
 	})
@@ -65,7 +65,7 @@ func SetupTestReconcile(inner reconcile.Reconciler) (reconcile.Reconciler, chan 
 func StartTestManager(mgr manager.Manager, g *gomega.GomegaWithT) chan struct{} {
 	stop := make(chan struct{})
 	go func() {
-		g.Expect(mgr.Start(context.TODO(), stop)).NotTo(gomega.HaveOccurred())
+		g.Expect(mgr.Start(context.TODO())).NotTo(gomega.HaveOccurred())
 	}()
 	return stop
 }
