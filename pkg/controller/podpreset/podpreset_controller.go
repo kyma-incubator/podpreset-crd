@@ -54,7 +54,7 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcilePodPreset{Client: mgr.GetClient(), scheme: mgr.GetScheme(), recorder: mgr.GetRecorder("podpreset-controller")}
+	return &ReconcilePodPreset{Client: mgr.GetClient(), scheme: mgr.GetScheme(), recorder: mgr.GetEventRecorderFor("podpreset-controller")}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -90,11 +90,11 @@ type ReconcilePodPreset struct {
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=settings.svcat.k8s.io,resources=podpresets,verbs=get;list;watch;create;update;patch;delete
-func (r *ReconcilePodPreset) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcilePodPreset) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	glog.V(6).Infof("Entering reconcile: %#v\n", request)
 	// Fetch the PodPreset instance
 	pp := &settingsv1alpha1.PodPreset{}
-	err := r.Client.Get(context.TODO(), request.NamespacedName, pp)
+	err := r.Client.Get(ctx, request.NamespacedName, pp)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
@@ -111,7 +111,7 @@ func (r *ReconcilePodPreset) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{}, err
 	}
 	deploymentList := &appsv1.DeploymentList{}
-	err = r.Client.List(context.TODO(), &client.ListOptions{}, deploymentList)
+	err = r.Client.List(ctx, deploymentList)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -128,7 +128,7 @@ func (r *ReconcilePodPreset) Reconcile(request reconcile.Request) (reconcile.Res
 				r.recorder.Eventf(pp, v1.EventTypeNormal, "DeploymentBounced", "Bounced %v-%v due to newly created or updated podpreset", deployment.Name, deployment.GetResourceVersion())
 				r.recorder.Eventf(&deployment, v1.EventTypeNormal, "DeploymentBounced", "Bounced to newly created or updated podpreset %v-%v", pp.Name, pp.GetResourceVersion())
 				metav1.SetMetaDataAnnotation(&deployment.Spec.Template.ObjectMeta, bouncedKey, pp.GetResourceVersion())
-				err = r.Client.Update(context.TODO(), &deployment)
+				err = r.Client.Update(ctx, &deployment)
 				if err != nil {
 					return reconcile.Result{}, err
 				}
