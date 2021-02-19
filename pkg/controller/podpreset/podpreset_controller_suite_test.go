@@ -16,6 +16,7 @@ limitations under the License.
 package podpreset
 
 import (
+	"context"
 	"log"
 	"os"
 	"path/filepath"
@@ -52,7 +53,7 @@ func TestMain(m *testing.M) {
 // writes the request to requests after Reconcile is finished.
 func SetupTestReconcile(inner reconcile.Reconciler) (reconcile.Reconciler, chan reconcile.Request) {
 	requests := make(chan reconcile.Request)
-	fn := reconcile.Func(func(req reconcile.Request) (reconcile.Result, error) {
+	fn := reconcile.Func(func(context.Context, req reconcile.Request) (reconcile.Result, error) {
 		result, err := inner.Reconcile(req)
 		requests <- req
 		return result, err
@@ -64,7 +65,7 @@ func SetupTestReconcile(inner reconcile.Reconciler) (reconcile.Reconciler, chan 
 func StartTestManager(mgr manager.Manager, g *gomega.GomegaWithT) chan struct{} {
 	stop := make(chan struct{})
 	go func() {
-		g.Expect(mgr.Start(stop)).NotTo(gomega.HaveOccurred())
+		g.Expect(mgr.Start(context.TODO(), stop)).NotTo(gomega.HaveOccurred())
 	}()
 	return stop
 }
