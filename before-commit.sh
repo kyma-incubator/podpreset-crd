@@ -13,6 +13,7 @@ echo "PATH: " + $PATH
 echo "GOPATH:" + $GOPATH
 echo -e "${NC}"
 
+
 ##
 # DEP ENSURE
 ##
